@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model ShoppingCart {
+  id        Int                   @id @default(autoincrement())
+  createdAt DateTime              @default(now())
+  user      User                  @relation(fields: [userId], references: [id])
+  userId    Int                   @unique
+  products  ShoppingCartProduct[]
+}
+
+model ShoppingCartProduct {
+  id             Int          @id @default(autoincrement())
+  product        ProductItem  @relation(fields: [productId], references: [id])
+  productId      Int
+  shoppingCart   ShoppingCart @relation(fields: [shoppingCartId], references: [id])
+  shoppingCartId Int
+  quantity       Int
+}
+
+model ProductItem {
+  id                Int                   @id @default(autoincrement())
+  createdAt         DateTime              @default(now())
+  name              String                @db.VarChar(255)
+  description       String                @db.Text
+  price             Decimal
+  category          String                @db.VarChar(255)
+  imageUrl          String                @db.VarChar(255)
+  shoppingCarts     ShoppingCartProduct[]
+  orderProductItems OrderProductItem[]
+  reviews           Review[]
+}
+
+model User {
+  id              Int           @id @default(autoincrement())
+  email           String        @unique
+  auth0Id         String        @unique @default("")
+  name            String?
+  shippingAddress String?
+  phoneNumber     String?
+  shoppingCart    ShoppingCart?
+  orderHistory    Order[]
+  reviews         Review[]
+}
+
+model Order {
+  id        Int                @id @default(autoincrement())
+  createdAt DateTime           @default(now())
+  user      User               @relation(fields: [userId], references: [id])
+  userId    Int
+  orderItem OrderProductItem[]
+}
+
+model OrderProductItem {
+  id        Int         @id @default(autoincrement())
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id])
+  orderId   Int
+  products  ProductItem @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+}
+
+model Review {
+  id        Int         @id @default(autoincrement())
+  comment   String
+  createdAt DateTime    @default(now())
+  product   ProductItem @relation(fields: [productId], references: [id])
+  productId Int
+  user      User        @relation(fields: [userId], references: [id])
+  userId    Int
+}
